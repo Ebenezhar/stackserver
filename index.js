@@ -63,6 +63,7 @@ app.post('/login', async function (req, res) {
                 res.status(200).json({
                     message: 'Successfully Logged in',
                     token: token,
+                    name: user.username
                 })
             } else {
                 res.json({ message: 'Password Incorrect' });
@@ -85,7 +86,6 @@ app.post('/Askquestion', authenticate, async function (req, res) {
         req.body.username = req.name;
         req.body.view = 0;
         const user = await db.collection('questions').insertOne(req.body);
-        console.log(user);
         res.json({ message: "Question is created successfully" })
 
     } catch (error) {
@@ -97,7 +97,6 @@ app.post('/Askquestion', authenticate, async function (req, res) {
 
 app.get("/questions", async function (req, res) {
     try {
-        console.log(req.body);
         const connection = await mongoClient.connect(URL);
         const db = connection.db('stackclone');
         const questions = await db.collection('questions').find().toArray();
@@ -145,7 +144,6 @@ app.post('/postAnswer/:id', authenticate, async function (req, res) {
 
 app.get("/answers/:id", async function (req, res) {
     try {
-        console.log(req.params.id);
         const connection = await mongoClient.connect(URL);
         const db = connection.db('stackclone');
         const answers = await db.collection('answers').find({ quesid: mongodb.ObjectId(req.params.id) }).sort({ votes: -1 }).toArray();
@@ -158,7 +156,6 @@ app.get("/answers/:id", async function (req, res) {
 
 //8 Add Votes
 app.put('/addvotes/:id', authenticate, async function (req, res) {
-    console.log(req.params.id);
     try {
         const connection = await mongoClient.connect(URL);
         const db = connection.db('stackclone');
@@ -177,7 +174,6 @@ app.put('/addvotes/:id', authenticate, async function (req, res) {
 //9 get question
 app.get("/question/:id", async function (req, res) {
     try {
-        console.log(req.body);
         const connection = await mongoClient.connect(URL);
         const db = connection.db('stackclone');
         const question = await db.collection('questions').findOne({ _id: mongodb.ObjectId(req.params.id) });
@@ -191,7 +187,6 @@ app.get("/question/:id", async function (req, res) {
 //10 verification mail
 app.post('/sendmail', async function (req, res) {
     try {
-        console.log(req.body);
         const connection = await mongoClient.connect(URL);
         const db = connection.db('stackclone');
         const user = await db.collection('users').findOne({ email: req.body.email });
@@ -204,8 +199,8 @@ app.post('/sendmail', async function (req, res) {
             //     port: 587,
             //     secure: false, // true for 465, false for other ports
             //     auth: {
-            //       user: "ebenezhar80@gmail.com", // generated ethereal user
-            //       pass: "ebenezhar#1996", // generated ethereal password
+            //       user: "ebenezhar80@gmail.com", 
+            //       pass: "ebenezhar#1996", 
             //     },
             //   });
             //   let info = await transporter.sendMail({
@@ -224,5 +219,23 @@ app.post('/sendmail', async function (req, res) {
         console.log(error);
     }
 })
+
+//11 User Details
+app.get("/userProfile",authenticate, async function (req, res) {
+    try {
+        const connection = await mongoClient.connect(URL);
+        const db = connection.db('stackclone');
+        console.log(req.userid);
+        // req.body.userid = mongodb.ObjectId(req.userid)
+        // req.body.username = req.name;
+        const userDet = await db.collection('users').findOne({ _id: mongodb.ObjectId(req.userid) });
+        await connection.close();
+        console.log(userDet);
+        res.status(200).json(userDet);
+    } catch (error) {
+        console.log(error);
+    }
+})
+
 
 app.listen(process.env.PORT || 3001)
