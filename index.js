@@ -3,7 +3,7 @@ const app = express();
 const cors = require('cors');
 const bcryptjs = require('bcryptjs');
 app.use(express.json());
-app.use(cors({ orgin: 'https://singular-cheesecake-06dddb.netlify.app/' }))
+app.use(cors({ orgin: 'https://bucolic-chebakia-56da75.netlify.app//' }))
 const mongodb = require('mongodb');
 const mongoClient = mongodb.MongoClient;
 const dotenv = require('dotenv').config();
