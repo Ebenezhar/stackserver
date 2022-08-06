@@ -3,15 +3,16 @@ const app = express();
 const cors = require('cors');
 const bcryptjs = require('bcryptjs');
 app.use(express.json());
-app.use(cors({ orgin: 'https://bucolic-chebakia-56da75.netlify.app//' }))
+app.use(cors({ orgin: '*' }))
 const mongodb = require('mongodb');
 const mongoClient = mongodb.MongoClient;
 const dotenv = require('dotenv').config();
 const URL = process.env.DB;
 const jwt = require('jsonwebtoken');
+const EmailSyntax = require('email-syntax').EmailSyntax;
 const rn = require('random-number');
 const options = {
-    min: 0,
+    min: 1000,
     max: 9999,
     integer: true
 }
@@ -193,9 +194,11 @@ app.post('/sendmail', async function (req, res) {
 
         if (user) {
             let randomnum = rn(options);
+            console.log(randomnum);
+            console.log(req.body.email);
             await db.collection('users').updateOne({ email: req.body.email }, { $set: { rnum: randomnum } });
             // let transporter = nodemailer.createTransport({
-            //     host: "stackoverflow.com",
+            //     host: "http://www.ebenezhar80@gmail.com",
             //     port: 587,
             //     secure: false, // true for 465, false for other ports
             //     auth: {
@@ -210,10 +213,11 @@ app.post('/sendmail', async function (req, res) {
             //     text: `${randomnum}`,
             //   });
             //   console.log(info);
+            res.status(200).json({ message: 'User found' })
         
         }
         else {
-            res.json({ message: 'User not found' })
+            res.status(401).json({ message: 'User not found' })
         }
     } catch (error) {
         console.log(error);
@@ -226,8 +230,6 @@ app.get("/userProfile",authenticate, async function (req, res) {
         const connection = await mongoClient.connect(URL);
         const db = connection.db('stackclone');
         console.log(req.userid);
-        // req.body.userid = mongodb.ObjectId(req.userid)
-        // req.body.username = req.name;
         const userDet = await db.collection('users').findOne({ _id: mongodb.ObjectId(req.userid) });
         await connection.close();
         console.log(userDet);
@@ -236,6 +238,21 @@ app.get("/userProfile",authenticate, async function (req, res) {
         console.log(error);
     }
 })
+
+//11 keyword search
+app.get("/questions/:key", authenticate, async function (req, res) {
+    try {
+        console.log(req.params.key);
+        const connection = await mongoClient.connect(URL);
+        const db = connection.db('stackclone');
+        const questions = await db.collection('questions').find({topic: req.params.key}).toArray();
+        await connection.close();
+        res.status(200).json(questions);
+    } catch (error) {
+        console.log(error);
+    }
+})
+
 
 
 app.listen(process.env.PORT || 3001)
