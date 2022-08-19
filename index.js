@@ -1,4 +1,5 @@
 const express = require('express');
+process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 0;
 const app = express();
 const cors = require('cors');
 const bcryptjs = require('bcryptjs');
@@ -191,48 +192,58 @@ app.post('/sendmail', async function (req, res) {
         const connection = await mongoClient.connect(URL);
         const db = connection.db('stackclone');
         const user = await db.collection('users').findOne({ email: req.body.email });
-
         if (user) {
             let randomnum = rn(options);
             console.log(randomnum);
-            console.log(req.body.email);
+            console.log("body", req.body.email);
             await db.collection('users').updateOne({ email: req.body.email }, { $set: { rnum: randomnum } });
-            // let transporter = nodemailer.createTransport({
-            //     host: "http://www.ebenezhar80@gmail.com",
-            //     port: 587,
-            //     secure: false, // true for 465, false for other ports
-            //     auth: {
-            //       user: "ebenezhar80@gmail.com", 
-            //       pass: "ebenezhar#1996", 
-            //     },
-            //   });
-            //   let info = await transporter.sendMail({
-            //     from: '"Ebenezhar" <ebenezhar80@gmail.com>', 
-            //     to: `${req.body}`, 
-            //     subject: "Verification", 
-            //     text: `${randomnum}`,
-            //   });
-            //   console.log(info);
-            res.status(200).json({ message: 'User found' })
-        
+            var transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user: "ebenezharselvakumar@gmail.com", 
+                    pass: "ipvpumhyvehscfff",
+                }
+            });
+
+            var mailOptions = {
+                from: 'ebenezharselvakumar@gmail.com',
+                to: `${req.body.email}`, 
+                subject: 'User verification',
+                text: `${randomnum}`,
+                //html: `<h2>Password : ${req.body.Password}</h2>`
+            };
+
+            transporter.sendMail(mailOptions, function (error, info) {
+                if (error) {
+                    console.log(error);
+                    res.json({
+                        message: "Error"
+                    })
+                } else {
+                    console.log('Email sent: ' + info.response);
+                    res.json({
+                        message: "Email sent"
+                    })
+                }
+            });
         }
         else {
-            res.status(401).json({ message: 'User not found' })
+            res.status(400).json({ message:'User not found' })
         }
-    } catch (error) {
+    }
+    catch (error) {
         console.log(error);
     }
+
 })
 
 //11 User Details
-app.get("/userProfile",authenticate, async function (req, res) {
+app.get("/userProfile", authenticate, async function (req, res) {
     try {
         const connection = await mongoClient.connect(URL);
         const db = connection.db('stackclone');
-        console.log(req.userid);
         const userDet = await db.collection('users').findOne({ _id: mongodb.ObjectId(req.userid) });
         await connection.close();
-        console.log(userDet);
         res.status(200).json(userDet);
     } catch (error) {
         console.log(error);
@@ -245,7 +256,7 @@ app.get("/questions/:key", authenticate, async function (req, res) {
         console.log(req.params.key);
         const connection = await mongoClient.connect(URL);
         const db = connection.db('stackclone');
-        const questions = await db.collection('questions').find({topic: req.params.key}).toArray();
+        const questions = await db.collection('questions').find({ topic: req.params.key }).toArray();
         await connection.close();
         res.status(200).json(questions);
     } catch (error) {
@@ -253,6 +264,44 @@ app.get("/questions/:key", authenticate, async function (req, res) {
     }
 })
 
+//12 verify 
+
+app.post("/verify", async (req, res) => {
+    try {
+        console.log(req.body);
+        const connection = await mongoClient.connect(URL);
+        const db = connection.db('stackclone');
+        const user = await db.collection('users').findOne({ email :req.body.email });
+        await connection.close();
+        if(user.rnum === req.body.vercode){
+            res.status(200).json(user)
+        }
+        else{
+            res.status(400).json({message:"Invalid Verification Code"})
+        }
+    } catch (error) {
+        console.log(error);
+    }
+})
+
+
+//13 update password
+app.post('/changepassword/:id', async function (req, res) {
+    try {
+        console.log(req.params.id);
+        const connection = await mongoClient.connect(URL);
+        const db = connection.db('stackclone');
+        const salt = await bcryptjs.genSalt(10);
+        const hash = await bcryptjs.hash(req.body.password1, salt);
+        req.body.password1 = hash;
+        delete req.body.password2;
+        await db.collection('users').updateOne({ email: req.params.id }, { $set: req.body });;
+        await connection.close();
+        res.json({ message: "Password updated successfully" })
+    } catch (error) {
+        console.log(error);
+    }
+})
 
 
 app.listen(process.env.PORT || 3001)
