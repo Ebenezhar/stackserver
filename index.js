@@ -115,8 +115,7 @@ app.put('/increaseview/:id', authenticate, async function (req, res) {
         const connection = await mongoClient.connect(URL);
         const db = connection.db('stackclone');
         delete req.body._id;
-        const student = await db.collection('questions')
-            .updateOne({ _id: mongodb.ObjectId(req.params.id) }, { $set: req.body });
+        await db.collection('questions').updateOne({ _id: mongodb.ObjectId(req.params.id) }, { $set: req.body });
         await connection.close();
         res.json({ message: "Successfully updated" })
     } catch (error) {
@@ -133,8 +132,7 @@ app.post('/postAnswer/:id', authenticate, async function (req, res) {
         req.body.username = req.name;
         req.body.votes = 0;
         req.body.quesid = mongodb.ObjectId(req.params.id);
-        const user = await db.collection('answers').insertOne(req.body);
-
+        await db.collection('answers').insertOne(req.body);
         res.json({ message: "Answer updated successfully" })
 
     } catch (error) {
@@ -194,7 +192,6 @@ app.post('/sendmail', async function (req, res) {
         const user = await db.collection('users').findOne({ email: req.body.email });
         if (user) {
             let randomnum = rn(options);
-            console.log(randomnum);
             console.log("body", req.body.email);
             await db.collection('users').updateOne({ email: req.body.email }, { $set: { rnum: randomnum } });
             var transporter = nodemailer.createTransport({
@@ -234,7 +231,6 @@ app.post('/sendmail', async function (req, res) {
     catch (error) {
         console.log(error);
     }
-
 })
 
 //11 User Details
@@ -253,7 +249,6 @@ app.get("/userProfile", authenticate, async function (req, res) {
 //11 keyword search
 app.get("/questions/:key", authenticate, async function (req, res) {
     try {
-        console.log(req.params.key);
         const connection = await mongoClient.connect(URL);
         const db = connection.db('stackclone');
         const questions = await db.collection('questions').find({ topic: req.params.key }).toArray();
@@ -268,7 +263,6 @@ app.get("/questions/:key", authenticate, async function (req, res) {
 
 app.post("/verify", async (req, res) => {
     try {
-        console.log(req.body);
         const connection = await mongoClient.connect(URL);
         const db = connection.db('stackclone');
         const user = await db.collection('users').findOne({ email :req.body.email });
