@@ -9,6 +9,8 @@ const mongodb = require('mongodb');
 const mongoClient = mongodb.MongoClient;
 const dotenv = require('dotenv').config();
 const URL = process.env.DB;
+const usermail = process.env.USER;
+const mailpassword = process.env.PASSWORD
 const jwt = require('jsonwebtoken');
 const EmailSyntax = require('email-syntax').EmailSyntax;
 const rn = require('random-number');
@@ -197,13 +199,13 @@ app.post('/sendmail', async function (req, res) {
             var transporter = nodemailer.createTransport({
                 service: 'gmail',
                 auth: {
-                    user: "ebenezharselvakumar@gmail.com", 
-                    pass: "ipvpumhyvehscfff",
+                    user: `${usermail}`, 
+                    pass: `${mailpassword}`,
                 }
             });
 
             var mailOptions = {
-                from: 'ebenezharselvakumar@gmail.com',
+                from: 'ebenezhar80@gmail.com',
                 to: `${req.body.email}`, 
                 subject: 'User verification',
                 text: `${randomnum}`,
@@ -225,7 +227,7 @@ app.post('/sendmail', async function (req, res) {
             });
         }
         else {
-            res.status(400).json({ message:'User not found' })
+            res.status(400).json({ message:'User not found'})
         }
     }
     catch (error) {
